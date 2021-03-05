@@ -49,17 +49,34 @@ for hashtag in hashtags:
 
     date = i.find("span", {"class": "feed-shared-actor__sub-description t-12 t-normal t-black--light"})
     date_text = BeautifulSoup(str(date).replace('<br/>', '').replace(',', ' ').replace('\n', ''), 'html.parser').text
-    date_text = date_text[date_text.find('  ') + 2:]
+    date_text = date_text[date_text.find('  ') + :]
+    
+    if (date_text == '      Öne çıkarılan içerik      ') or (date_text == 'one'):
+      continue
+
+    #wd.find_element_by_css_selector("#"+i["id"]+" "+".feed-shared-control-menu__trigger").click()
+
 
     imgs = i.find_all("img", {"class": "ivm-view-attr__img--centered"})
     src = []
-    for i in imgs:
-      src.append(i["src"])
-    #print(src)
+    profile_photo = []
+    post_photo = []
+    for j in imgs:
+      src.append(j["src"])
 
-    if (date_text == '      Öne çıkarılan içerik      ') or (date_text == 'one'):
-      continue
-    data.append([hashtag, date_text, name_text, post_text, src])
+    for j in src:
+      if (j.find('profile') != -1) or (j.find('company') != -1):
+        if(len(profile_photo)<1):
+          profile_photo.append(j)
+
+      else:
+        if(len(post_photo)<1):
+          post_photo.append(j)
+      #print(src)
+
+
+    
+    data.append([hashtag, date_text, name_text, post_text, profile_photo, post_photo])
 
     count += 1
   print(hashtag + ': ' + str(count))
