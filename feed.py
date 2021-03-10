@@ -56,7 +56,6 @@ for hashtag in hashtags:
 
     #wd.find_element_by_css_selector("#"+i["id"]+" "+".feed-shared-control-menu__trigger").click()
 
-
     imgs = i.find_all("img", {"class": "ivm-view-attr__img--centered"})
     src = []
     profile_photo = []
