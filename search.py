@@ -1,8 +1,8 @@
 from selenium import webdriver
 from bs4 import BeautifulSoup
+from datetime import datetime, timedelta
 import pandas as pd
-import time
-import sys
+import time, sys
 sys.path.insert(0,'/usr/lib/chromium-browser/chromedriver')
 
 chrome_options = webdriver.ChromeOptions()
@@ -19,26 +19,36 @@ wd.find_element_by_id("session_key").send_keys(username)
 wd.find_element_by_id("session_password").send_keys(password)
 wd.find_element_by_class_name("sign-in-form__submit-button").click()
 
-keywords = {'valilik'}
+keywords = {'yeşilyurt belediyesi'}
 SCROLL_PAUSE_TIME = 3
 
 data = []
 page = 1
 total_page = 0
+
+def date_find(timetype, dif):
+  today = datetime.now()
+  difr = 0
+  if(timetype == 'a'):
+    difr = timedelta(minutes = dif)
+  elif(timetype == 's'):
+    difr = timedelta(hours = dif)
+  elif(timetype == 'g'):
+    difr = timedelta(days = dif)
+  elif(timetype == 'h'):
+    difr = timedelta(weeks = dif)
+  elif(timetype == 'ay'):
+    dif = 4*dif
+    difr = timedelta(weeks = dif)
+  else:
+    dif = 53*dif
+    difr = timedelta(weeks = dif )
+  return today - difr
+
 for keyword in keywords:
   count = 0
   wd.get("https://www.linkedin.com/search/results/content/?keywords=" + keyword + "&origin=FACETED_SEARCH&page=" + str(page) + "&sortBy=\"date_posted\"")
-  time.sleep(SCROLL_PAUSE_TIME)
-  last_height = wd.execute_script("return document.body.scrollHeight")
-
-  while True:
-    wd.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-    time.sleep(SCROLL_PAUSE_TIME)
-    new_height = wd.execute_script("return document.body.scrollHeight")
-    if new_height == last_height:
-      soup = BeautifulSoup(wd.page_source, 'html.parser')
-      break
-    last_height = new_height
+  soup = BeautifulSoup(wd.page_source, 'html.parser')
 
   result = soup.find("div", {"class": "search-marvel-srp"}).find("div").find("div")
   result = BeautifulSoup(str(result).replace('<br/>', '').replace(',', ' ').replace('\n', ''), 'html.parser').text
@@ -52,17 +62,7 @@ for keyword in keywords:
 
   while(page <= total_page):
     wd.get("https://www.linkedin.com/search/results/content/?keywords=" + keyword + "&origin=FACETED_SEARCH&page=" + str(page) + "&sortBy=\"date_posted\"")
-    time.sleep(SCROLL_PAUSE_TIME)
-    last_height = wd.execute_script("return document.body.scrollHeight")
-
-    while True:
-      wd.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-      #time.sleep(SCROLL_PAUSE_TIME)
-      new_height = wd.execute_script("return document.body.scrollHeight")
-      if new_height == last_height:
-        soup = BeautifulSoup(wd.page_source, 'html.parser')
-        break
-        last_height = new_height
+    soup = BeautifulSoup(wd.page_source, 'html.parser')
 
     posts = soup.findAll("li", {"class": "reusable-search__result-container artdeco-card search-results__hide-divider mb2"})
     for i in posts:
@@ -78,8 +78,6 @@ for keyword in keywords:
         if (a.find('feed') != -1):
           if(len(post_link)<1):
             post_link.append(a)
-
-      #print(post_link)
 
       text = i.find("p", {"class": "entity-result__summary"})
       post1_text = BeautifulSoup(str(text).replace('\xa0', ' ').replace('…daha fazla gör', '').replace('None', '').replace('\n', ''),'html.parser').text
@@ -104,9 +102,28 @@ for keyword in keywords:
         l = int(len(name_text)/2)
         name_text = name_text[l:]
 
+      #reaction_number = i.find("div", {"class": "entity-result__insights t-12"})
+      #reaction_number = BeautifulSoup(str(reaction_number).replace('\n', '').replace('None', ''), 'html.parser').text
+      #print(reaction_number)
+
       date = i.find("p", {"class": "entity-result__content-secondary-subtitle t-black--light t-12"})
-      date_text = BeautifulSoup(str(date).replace(' •', '').replace('\n', ''), 'html.parser').text
-      date_text = date_text.rstrip()
+      date_text = BeautifulSoup(str(date).replace('\n', ''), 'html.parser').text
+      date_text_result = ''
+
+      if(date_text.count('•') > 1):
+        date_text = date_text.split("•")[1]
+        date_text = date_text.strip()
+        #if(date_text.find('ay') > 1):
+
+      else:
+        date_text = date_text.split("•")[0]
+        date_text = date_text.rstrip()
+
+      if(date_text[1].isdigit()):
+        date_text_result = date_find(date_text[2:], int(date_text[:2]))
+      else:
+        date_text_result = date_find(date_text[1:], int(date_text[:1]))
+      date_text_result = date_text_result.strftime('%d-%m-%Y %H:%M:%S')
      
       imgs = i.find_all("img", {"class": "ivm-view-attr__img--centered"})
       src = []
@@ -139,7 +156,7 @@ for keyword in keywords:
           post_text = h2_text + " " + h3_text
 
       post_text = post_text.strip()
-      data.append([keyword, date_text, name_text, post_text, profile_photo, post_photo, post_link])
+      data.append([keyword, date_text_result, name_text, post_text, profile_photo, post_photo, post_link])
 
       count += 1
     print(keyword + ': ' + str(count))
