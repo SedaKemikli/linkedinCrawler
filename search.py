@@ -102,9 +102,9 @@ for keyword in keywords:
         l = int(len(name_text)/2)
         name_text = name_text[l:]
 
-      #reaction_number = i.find("div", {"class": "entity-result__insights t-12"})
-      #reaction_number = BeautifulSoup(str(reaction_number).replace('\n', '').replace('None', ''), 'html.parser').text
-      #print(reaction_number)
+      reaction_number = i.find("div", {"class": "entity-result__insights t-12"}).find("span")
+      reaction_number = BeautifulSoup(str(reaction_number).replace('\n', '').replace('None', ''), 'html.parser').text
+      print(reaction_number)
 
       date = i.find("p", {"class": "entity-result__content-secondary-subtitle t-black--light t-12"})
       date_text = BeautifulSoup(str(date).replace('\n', ''), 'html.parser').text
