@@ -49,7 +49,7 @@ for hashtag in hashtags:
 
     date = i.find("span", {"class": "feed-shared-actor__sub-description t-12 t-normal t-black--light"})
     date_text = BeautifulSoup(str(date).replace('<br/>', '').replace(',', ' ').replace('\n', ''), 'html.parser').text
-    date_text = date_text[date_text.find('  ') + :]
+    #date_text = date_text[date_text.find('  ') + :]
     
     if (date_text == '      Öne çıkarılan içerik      ') or (date_text == 'one'):
       continue
