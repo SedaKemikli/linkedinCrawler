@@ -1,15 +1,14 @@
 from selenium import webdriver
 from bs4 import BeautifulSoup
-import pandas as pd
 import time
 import sys
-sys.path.insert(0,'/usr/lib/chromium-browser/chromedriver')
+
 
 chrome_options = webdriver.ChromeOptions()
 chrome_options.add_argument('--headless')
 chrome_options.add_argument('--no-sandbox')
 chrome_options.add_argument('--disable-dev-shm-usage')
-wd = webdriver.Chrome('chromedriver', options=chrome_options)
+wd = webdriver.Chrome('chromedriver/chromedriver', options=chrome_options)
 
 username = 'yozg66@yandex.com'
 password = '159263'
