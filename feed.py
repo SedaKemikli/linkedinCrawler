@@ -1,14 +1,15 @@
 from selenium import webdriver
 from bs4 import BeautifulSoup
-import time
-import sys
-
+from datetime import datetime, timedelta
+import pandas as pd
+import requests, json, time, sys
+sys.path.insert(0,'/usr/lib/chromium-browser/chromedriver')
 
 chrome_options = webdriver.ChromeOptions()
 chrome_options.add_argument('--headless')
 chrome_options.add_argument('--no-sandbox')
 chrome_options.add_argument('--disable-dev-shm-usage')
-wd = webdriver.Chrome('chromedriver/chromedriver', options=chrome_options)
+wd = webdriver.Chrome('chromedriver', options=chrome_options)
 
 username = 'yozg66@yandex.com'
 password = '159263'
@@ -22,6 +23,31 @@ hashtags = {'kaymakam'}
 SCROLL_PAUSE_TIME = 3
 
 data = []
+page = 1
+total_page = 0
+
+def chunks(lst, n):
+    for i in range(0, len(lst), n):
+        yield lst[i:i + n]
+
+def date_find(timetype, dif):
+  today = datetime.now()
+  difr = 0
+  if(timetype == 'a'):
+    difr = timedelta(minutes = dif)
+  elif(timetype == 's'):
+    difr = timedelta(hours = dif)
+  elif(timetype == 'g'):
+    difr = timedelta(days = dif)
+  elif(timetype == 'h'):
+    difr = timedelta(weeks = dif)
+  elif(timetype == 'ay'):
+    dif = 4*dif
+    difr = timedelta(weeks = dif)
+  else:
+    dif = 53*dif
+    difr = timedelta(weeks = dif )
+  return today - difr
 
 for hashtag in hashtags:
   count = 0
@@ -74,14 +100,50 @@ for hashtag in hashtags:
 
 
     
-    data.append([hashtag, date_text, name_text, post_text, profile_photo, post_photo])
+    #data.append([hashtag, date_text, name_text, post_text, profile_photo, post_photo])
+    data={
+          "link": ,
+          "type": "post",
+          "created_at": ,
+          "text": post_text,
+
+          "user":{
+            "title": name_text,
+            "description": ,
+            "image_url": profile_photo,
+            "counts": {
+              "followers": ,
+            }
+          },
+
+          "entities": {
+              "images": [
+                {"image_url": post_photo} 
+              ]
+          },
+
+          "counts": {
+            "likes": ,
+            "comments": 
+          }
+    }
+    sublist = list(chunks([data], 40))
+
+    headers = {'X-Api-Key': 'MTYxNjAwMzE1NTY3MzcwMjQ=',  'X-Secret-Key': 'a351852c1ea3fa9f.6a02b6a8fe9b6000354bb346dd01165e'}
+    for i in sublist:
+      r = requests.post('https://eas.etsetra.com/service/DataInsert', headers=headers, json={"data": i})
+      # print("=======================================================================")
+      # print(i)
+      print("=======================================================================")
+      print(r.text)
+      print("=======================================================================")
+      #data.append([keyword, date_text_result, name_text, title_text, profile_photo, follower_number, post_text, post_photo, post_link])
 
     count += 1
-  print(hashtag + ': ' + str(count))
+    #print(keyword + ': ' + str(count))
+    #print(page)
+  page += 1
+    
 
-for i in data:
-  print ("===========================================")
-  print(i)
-  print ("===========================================")
-#print(data)
+    #print(data)
 wd.close()

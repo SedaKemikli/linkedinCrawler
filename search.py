@@ -19,7 +19,8 @@ wd.find_element_by_id("session_key").send_keys(username)
 wd.find_element_by_id("session_password").send_keys(password)
 wd.find_element_by_class_name("sign-in-form__submit-button").click()
 
-keywords = {'çankaya belediyesi'}
+keywords = {'yasak'}
+#milletvekili, belediye, mansur yavaş, ankara büyükşehir belediyesi, ekrem imamoğlu, istanbul büyükşehir belediyesi, tokat valiliği, çankaya belediyesi, emniyet genel müdürlüğü, mehmet aktaş, afyon valiliği, urfa büyükşehir belediyesi, ozan balcı, alper taşdelen, gökmen çiçek, zeynel abidin beyazgül'}
 SCROLL_PAUSE_TIME = 3
 
 data = {}
@@ -142,10 +143,11 @@ for keyword in keywords:
         follower_number= ""
       
       like_number = i.find("div", {"class": "entity-result__insights t-12"}).find("span")
-      like_number = BeautifulSoup(str(like_number).replace('\n', '').replace('None', ''), 'html.parser').text
+      like_number = BeautifulSoup(str(like_number).replace('\n', '').replace('.','').replace('None', ''), 'html.parser').text
+      print(like_number)
 
       comment_number = i.find("div", {"class": "entity-result__insights t-12"}).find("span", {"class": "v-align-middle"})
-      comment_number = BeautifulSoup(str(comment_number).replace('\n', '').replace('None', ''), 'html.parser').text
+      comment_number = BeautifulSoup(str(comment_number).replace('\n', '').replace('.','').replace('None', ''), 'html.parser').text
       comment_number = comment_number.split(" Yorum")[0]
 
       date = i.find("p", {"class": "entity-result__content-secondary-subtitle t-black--light t-12"})
@@ -174,22 +176,29 @@ for keyword in keywords:
       for j in imgs:
         src.append(j["src"])
       
+      profile_photos = []
+      post_photos = []
+      profile_photo = ''
+
+
       if(len(src)>0):
-        profile_photo = []
-        post_photo = []
         for j in src:
           if (j.find('profile') != -1) or (j.find('company') != -1):
-            if(len(profile_photo)<1):
-              profile_photo.append(j)
-              profile_photo = profile_photo[0]
+            if(len(profile_photos)<1):
+              profile_photos.append(j)
+              profile_photo = profile_photos[0]
 
+          elif (j.find('sync') != -1) or (j.find('feedshare') != -1):
+            post_photos.append(j)
           else:
-            #if(len(post_photo)<1):
-            post_photo.append(j)
-            post_photo = post_photo[0]
+                if(len(profile_photo)<1):
+                    profile_photo = ''
+
+                elif(len(post_photos)<1):
+                    post_photos = []
       else:
         profile_photo = ''
-        post_photo = ''
+        post_photos = []
 
       if(len(post1_text)>0):
         if(post1_text == h2_text):
@@ -206,35 +215,33 @@ for keyword in keywords:
           post_text = h2_text + " " + h3_text
 
       post_text = post_text.strip()
-      data={
-            "link": post_link,
-            "type": "post",
-            "created_at": date_text_result,
-            "text": post_text,
+      if(date_text.find('ay') < 1) and (date_text.find('yıl') < 1) and (date_text.find('h') < 1):
+        data={
+                "link": post_link,
+                "type": "post",
+                "created_at": date_text_result,
+                "text": post_text,
 
-            "user":{
-              "title": name_text,
-              "description": title_text,
-              "image_url": profile_photo,
-              "counts": {
-                "followers": follower_number,
-              }
-            },
-
-            "entities": {
-                "images": [
-                  {"image_url": post_photo} 
-                ]
-            },
-
-            "counts": {
-              "likes": like_number,
-              "comments": comment_number
-            }
-      }
+                "user":{
+                "title": name_text,
+                "description": title_text,
+                "image_url": profile_photo,
+                "counts": {
+                    "followers": follower_number,
+                }
+                },
+                "counts": {
+                "likes": like_number,
+                "comments": comment_number
+                }
+        }
+        if len(post_photos) >0:
+            data["entities"] = {
+                "images": [{"image_url": post_photos[0] } ]
+            } 
       sublist = list(chunks([data], 40))
 
-      headers = {'X-Api-Key': 'MTYxNjAwMzE1NTY3MzcwMjQ=',  'X-Secret-Key': 'a351852c1ea3fa9f.6a02b6a8fe9b6000354bb346dd01165e'}
+      headers = {'X-Api-Key': 'MTYxODgxODcxNTk0OTUzNTY=',  'X-Secret-Key': '57e1a37b87391ffc.54ae83014fba874da0a97c8c8cccee20'}
       for i in sublist:
         r = requests.post('https://eas.etsetra.com/service/DataInsert', headers=headers, json={"data": i})
         # print("=======================================================================")
