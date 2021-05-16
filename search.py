@@ -3,13 +3,14 @@ from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 import pandas as pd
 import requests, json, time, sys
+from webdriver_manager.chrome import ChromeDriverManager
 sys.path.insert(0,'/usr/lib/chromium-browser/chromedriver')
 
 chrome_options = webdriver.ChromeOptions()
 chrome_options.add_argument('--headless')
 chrome_options.add_argument('--no-sandbox')
 chrome_options.add_argument('--disable-dev-shm-usage')
-wd = webdriver.Chrome('chromedriver', options=chrome_options)
+wd = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
 
 username = 'yozg66@yandex.com'
 password = '159263'
@@ -19,7 +20,7 @@ wd.find_element_by_id("session_key").send_keys(username)
 wd.find_element_by_id("session_password").send_keys(password)
 wd.find_element_by_class_name("sign-in-form__submit-button").click()
 
-keywords = {'yasak'}
+keywords = {'haber'}
 #milletvekili, belediye, mansur yavaş, ankara büyükşehir belediyesi, ekrem imamoğlu, istanbul büyükşehir belediyesi, tokat valiliği, çankaya belediyesi, emniyet genel müdürlüğü, mehmet aktaş, afyon valiliği, urfa büyükşehir belediyesi, ozan balcı, alper taşdelen, gökmen çiçek, zeynel abidin beyazgül'}
 SCROLL_PAUSE_TIME = 3
 
@@ -132,7 +133,7 @@ for keyword in keywords:
       title = i.find("div", {"class": "entity-result__primary-subtitle t-14 t-black"})
       title_text = BeautifulSoup(str(title).replace('\n', '').replace('None', ''), 'html.parser').text
       if(title_text.find('takipçi') != -1):
-        follower_number = title_text.split(" takipçi")[0]
+        follower_number = title_text.split(" takipçi")[0].replace(',','')
         if(follower_number.find('B') != -1 and follower_number.find('.') != -1 ):
           follower_number = BeautifulSoup(str(follower_number).replace('B', '00').replace('.', ''), 'html.parser').text
         else:
@@ -144,7 +145,6 @@ for keyword in keywords:
       
       like_number = i.find("div", {"class": "entity-result__insights t-12"}).find("span")
       like_number = BeautifulSoup(str(like_number).replace('\n', '').replace('.','').replace('None', ''), 'html.parser').text
-      print(like_number)
 
       comment_number = i.find("div", {"class": "entity-result__insights t-12"}).find("span", {"class": "v-align-middle"})
       comment_number = BeautifulSoup(str(comment_number).replace('\n', '').replace('.','').replace('None', ''), 'html.parser').text
@@ -153,21 +153,26 @@ for keyword in keywords:
       date = i.find("p", {"class": "entity-result__content-secondary-subtitle t-black--light t-12"})
       date_text = BeautifulSoup(str(date).replace('\n', ''), 'html.parser').text
       date_text_result = ''
+      
 
       if(date_text.count('•') > 1):
         date_text = date_text.split("•")[1]
         date_text = date_text.strip()
         #if(date_text.find('ay') > 1):
-
+      
       else:
         date_text = date_text.split("•")[0]
         date_text = date_text.rstrip()
-
+      
+      if(date_text== 'şimdi'):
+          date_text = "1a"
+        
       if(date_text[1].isdigit()):
         date_text_result = date_find(date_text[2:], int(date_text[:2]))
+        date_text_result = date_text_result.strftime('%Y-%m-%d %H:%M:%S')
       else:
         date_text_result = date_find(date_text[1:], int(date_text[:1]))
-      date_text_result = date_text_result.strftime('%Y-%m-%d %H:%M:%S')
+        date_text_result = date_text_result.strftime('%Y-%m-%d %H:%M:%S')
      
       src = []
       
@@ -215,7 +220,9 @@ for keyword in keywords:
           post_text = h2_text + " " + h3_text
 
       post_text = post_text.strip()
+      
       if(date_text.find('ay') < 1) and (date_text.find('yıl') < 1) and (date_text.find('h') < 1):
+        print(post_link)
         data={
                 "link": post_link,
                 "type": "post",
@@ -223,10 +230,10 @@ for keyword in keywords:
                 "text": post_text,
 
                 "user":{
-                "title": name_text,
-                "description": title_text,
-                "image_url": profile_photo,
-                "counts": {
+                  "title": name_text,
+                  "description": title_text,
+                  "image_url": profile_photo,
+                  "counts": {
                     "followers": follower_number,
                 }
                 },
