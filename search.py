@@ -20,9 +20,10 @@ wd.find_element_by_id("session_key").send_keys(username)
 wd.find_element_by_id("session_password").send_keys(password)
 wd.find_element_by_class_name("sign-in-form__submit-button").click()
 
-keywords = {'haber'}
-#milletvekili, belediye, mansur yavaş, ankara büyükşehir belediyesi, ekrem imamoğlu, istanbul büyükşehir belediyesi, tokat valiliği, çankaya belediyesi, emniyet genel müdürlüğü, mehmet aktaş, afyon valiliği, urfa büyükşehir belediyesi, ozan balcı, alper taşdelen, gökmen çiçek, zeynel abidin beyazgül'}
+keywords = {'malatya'}
+#süleyman soylu, sedat peker, zeynel abidin beyazgül, urfa büyükşehir belediyesi, urfa, çankaya, çankaya belediyesi, alper taşdelen, ankara, milletvekili, belediye, mansur yavaş, ankara büyükşehir belediyesi, ekrem imamoğlu, istanbul büyükşehir belediyesi, tokat valiliği, çankaya belediyesi, emniyet genel müdürlüğü, mehmet aktaş, afyon valiliği, ozan balcı, gökmen çiçek, zeynel abidin beyazgül'}
 SCROLL_PAUSE_TIME = 3
+
 
 data = {}
 page = 1
@@ -145,12 +146,14 @@ for keyword in keywords:
       
       like_number = i.find("div", {"class": "entity-result__insights t-12"}).find("span")
       like_number = BeautifulSoup(str(like_number).replace('\n', '').replace('.','').replace('None', ''), 'html.parser').text
+      like_number = like_number.split(" Reaksiyon")[0]
+      #print(like_number)  
 
       comment_number = i.find("div", {"class": "entity-result__insights t-12"}).find("span", {"class": "v-align-middle"})
       comment_number = BeautifulSoup(str(comment_number).replace('\n', '').replace('.','').replace('None', ''), 'html.parser').text
       comment_number = comment_number.split(" Yorum")[0]
 
-      date = i.find("p", {"class": "entity-result__content-secondary-subtitle t-black--light t-12"})
+      date = i.find("p", {"class": "t-black--light t-12"})
       date_text = BeautifulSoup(str(date).replace('\n', ''), 'html.parser').text
       date_text_result = ''
       
@@ -220,49 +223,49 @@ for keyword in keywords:
           post_text = h2_text + " " + h3_text
 
       post_text = post_text.strip()
+      #print(post_link, date_text_result, post_text, name_text, title_text, profile_photo, follower_number, like_number, comment_number)
       
-      if(date_text.find('ay') < 1) and (date_text.find('yıl') < 1) and (date_text.find('h') < 1):
-        print(post_link)
-        data={
-                "link": post_link,
-                "type": "post",
-                "created_at": date_text_result,
-                "text": post_text,
+      data={
+            "link": post_link,
+            "type": "post",
+            "created_at": date_text_result,
+            "text": post_text,
 
-                "user":{
-                  "title": name_text,
-                  "description": title_text,
-                  "image_url": profile_photo,
-                  "counts": {
-                    "followers": follower_number,
-                }
-                },
+            "user":{
+                "title": name_text,
+                "description": title_text,
+                "image_url": profile_photo,
                 "counts": {
-                "likes": like_number,
-                "comments": comment_number
-                }
+                "followers": follower_number,
+            }
+            },
+            "counts": {
+            "likes": like_number,
+            "comments": comment_number
+            }
         }
-        if len(post_photos) >0:
-            data["entities"] = {
-                "images": [{"image_url": post_photos[0] } ]
-            } 
+      if len(post_photos) >0:
+        data["entities"] = {
+            "images": [{"image_url": post_photos[0] } ]
+      } 
       sublist = list(chunks([data], 40))
-
+      #print(sublist)
       headers = {'X-Api-Key': 'MTYxODgxODcxNTk0OTUzNTY=',  'X-Secret-Key': '57e1a37b87391ffc.54ae83014fba874da0a97c8c8cccee20'}
       for i in sublist:
-        r = requests.post('https://eas.etsetra.com/service/DataInsert', headers=headers, json={"data": i})
-        # print("=======================================================================")
-        # print(i)
-        print("=======================================================================")
-        print(r.text)
-        print("=======================================================================")
+          r = requests.post('https://eas.etsetra.com/service/DataInsert', headers=headers, json={"data": i})
+          # print("=======================================================================")
+          #print(i)
+          print("=======================================================================")
+          print(r.text)
+          print("=======================================================================")
       #data.append([keyword, date_text_result, name_text, title_text, profile_photo, follower_number, post_text, post_photo, post_link])
 
-      count += 1
-    #print(keyword + ': ' + str(count))
-    #print(page)
+    count += 1
+      #print(keyword + ': ' + str(count))
+      #print(page)
     page += 1
     
 
     #print(data)
+
 wd.close()
