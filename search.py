@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 import pandas as pd
 import requests, json, time, sys
 from webdriver_manager.chrome import ChromeDriverManager
+import hashlib
 sys.path.insert(0,'/usr/lib/chromium-browser/chromedriver')
 
 chrome_options = webdriver.ChromeOptions()
@@ -20,10 +21,9 @@ wd.find_element_by_id("session_key").send_keys(username)
 wd.find_element_by_id("session_password").send_keys(password)
 wd.find_element_by_class_name("sign-in-form__submit-button").click()
 
-keywords = {'malatya'}
-#süleyman soylu, sedat peker, zeynel abidin beyazgül, urfa büyükşehir belediyesi, urfa, çankaya, çankaya belediyesi, alper taşdelen, ankara, milletvekili, belediye, mansur yavaş, ankara büyükşehir belediyesi, ekrem imamoğlu, istanbul büyükşehir belediyesi, tokat valiliği, çankaya belediyesi, emniyet genel müdürlüğü, mehmet aktaş, afyon valiliği, ozan balcı, gökmen çiçek, zeynel abidin beyazgül'}
+keywords = {'ekonomi'}
+#milletvekili, belediye, mansur yavaş, ankara büyükşehir belediyesi, ekrem imamoğlu, istanbul büyükşehir belediyesi, tokat valiliği, çankaya belediyesi, emniyet genel müdürlüğü, mehmet aktaş, afyon valiliği, urfa büyükşehir belediyesi, ozan balcı, alper taşdelen, gökmen çiçek, zeynel abidin beyazgül'}
 SCROLL_PAUSE_TIME = 3
-
 
 data = {}
 page = 1
@@ -36,15 +36,15 @@ def chunks(lst, n):
 def date_find(timetype, dif):
   today = datetime.now()
   difr = 0
-  if(timetype == 'a'):
+  if(timetype == ' dakika'):
     difr = timedelta(minutes = dif)
-  elif(timetype == 's'):
+  elif(timetype == ' saat'):
     difr = timedelta(hours = dif)
-  elif(timetype == 'g'):
+  elif(timetype == ' gün'):
     difr = timedelta(days = dif)
-  elif(timetype == 'h'):
+  elif(timetype == ' hafta'):
     difr = timedelta(weeks = dif)
-  elif(timetype == 'ay'):
+  elif(timetype == ' ay'):
     dif = 4*dif
     difr = timedelta(weeks = dif)
   else:
@@ -67,17 +67,17 @@ for keyword in keywords:
       break
     last_height = new_height
   soup = BeautifulSoup(wd.page_source, 'html.parser')
-  result = soup.find("div", {"class": "search-marvel-srp"}).find("div").find("div")
-  result = BeautifulSoup(str(result).replace('<br/>', '').replace(',', ' ').replace('\n', ''), 'html.parser').text
-  result = result.split(" ")[0]
+  # result = soup.find("div",{"class":"ph0 pv0 search-results__no-cluster-container mb2"})
+  # result = BeautifulSoup(str(result).replace('<br/>', '').replace(',', ' ').replace('\n', ''), 'html.parser').text
+  # result = result.split(" ")[0]
   
-  if(int(result)%10 == 0):
-    total_page = int(result)/10
-  else:
-    total_page = (int(result)/10) +1
-  total_page = int(total_page)
+  # if(int(result)%10 == 0):
+  #   total_page = int(result)/10
+  # else:
+  #   total_page = (int(result)/10) +1
+  # total_page = int(total_page)
 
-  while(page <= total_page):
+  while(page <= 50):
     wd.get("https://www.linkedin.com/search/results/content/?keywords=" + keyword + "&origin=FACETED_SEARCH&page=" + str(page) + "&sortBy=\"date_posted\"")
     time.sleep(SCROLL_PAUSE_TIME)
     last_height = wd.execute_script("return document.body.scrollHeight")
@@ -93,20 +93,28 @@ for keyword in keywords:
     #soup = BeautifulSoup(wd.page_source, 'html.parser')
     #print(soup)
 
-    posts = soup.findAll("li", {"class": "reusable-search__result-container artdeco-card search-results__hide-divider mb2"})
+    posts = soup.findAll("li", {"class": "reusable-search__result-container artdeco-card search-results__hide-divider mb3"})
     for i in posts:
 
       links = i.find_all("a", {"class": "app-aware-link"})
       href= []
       post_link= []
       for a in links:
-        href.append(a["href"])
+        if(len(href)<1):
+          href.append(a["href"])
+      href = href[0]
     
-      for a in href: 
-        if (a.find('feed') != -1):
-          if(len(post_link)<1):
-            post_link.append(a)
-            post_link = post_link[0]
+      # for a in href: 
+      #   if (a.find('feed') != -1):
+      #     if(len(post_link)<1):
+      #       post_link.append(a)
+      #       post_link = post_link[0]
+      #       print(post_link)
+      #result = i.find("div",{"class":"feed-shared-update-v2 feed-shared-update-v2--minimal-padding full-height relative feed-shared-update-v2--e2e artdeco-card ember-view"})
+      #data_urn = result['data-urn']
+      #print(result)
+      #data_urn=i.find("div",attrs={'data-urn' : True})
+      
 
       text = i.find("p", {"class": "entity-result__summary"})
       post1_text = BeautifulSoup(str(text).replace('\xa0', ' ').replace('…daha fazla gör', '').replace('None', '').replace('\n', ''),'html.parser').text
@@ -144,7 +152,7 @@ for keyword in keywords:
       else:
         follower_number= ""
       
-      like_number = i.find("div", {"class": "entity-result__insights t-12"}).find("span")
+      like_number = i.find("div", {"class": "entity-result__insights t-12"}).find("span", {"aria-hidden": "true"})
       like_number = BeautifulSoup(str(like_number).replace('\n', '').replace('.','').replace('None', ''), 'html.parser').text
       like_number = like_number.split(" Reaksiyon")[0]
       #print(like_number)  
@@ -152,10 +160,12 @@ for keyword in keywords:
       comment_number = i.find("div", {"class": "entity-result__insights t-12"}).find("span", {"class": "v-align-middle"})
       comment_number = BeautifulSoup(str(comment_number).replace('\n', '').replace('.','').replace('None', ''), 'html.parser').text
       comment_number = comment_number.split(" Yorum")[0]
+      #print(comment_number)
 
-      date = i.find("p", {"class": "t-black--light t-12"})
+      date = i.find("div", {"class": "entity-result__content-actor pt0 t-12 t-black--light"}).find("p",{"class":"t-black--light t-12"}).text
       date_text = BeautifulSoup(str(date).replace('\n', ''), 'html.parser').text
       date_text_result = ''
+      print(date)
       
 
       if(date_text.count('•') > 1):
@@ -168,7 +178,7 @@ for keyword in keywords:
         date_text = date_text.rstrip()
       
       if(date_text== 'şimdi'):
-          date_text = "1a"
+          date_text = "1 dakika"
         
       if(date_text[1].isdigit()):
         date_text_result = date_find(date_text[2:], int(date_text[:2]))
@@ -223,49 +233,50 @@ for keyword in keywords:
           post_text = h2_text + " " + h3_text
 
       post_text = post_text.strip()
-      #print(post_link, date_text_result, post_text, name_text, title_text, profile_photo, follower_number, like_number, comment_number)
-      
-      data={
-            "link": post_link,
-            "type": "post",
-            "created_at": date_text_result,
-            "text": post_text,
+      id = hashlib.md5((href+date_text_result).encode('utf-8')).hexdigest()
+      print(id)
+      if(date_text.find(' ay') < 1) and (date_text.find(' yıl') < 1) and (date_text.find(' hafta') < 1):
+        data={
+                "id": id,
+                "link": href,
+                "type": "post",
+                "created_at": date_text_result,
+                "text": post_text,
 
-            "user":{
-                "title": name_text,
-                "description": title_text,
-                "image_url": profile_photo,
+                "user":{
+                  "title": name_text,
+                  "description": title_text,
+                  "image_url": profile_photo,
+                  "counts": {
+                    "followers": follower_number,
+                  }
+                },
                 "counts": {
-                "followers": follower_number,
-            }
-            },
-            "counts": {
-            "likes": like_number,
-            "comments": comment_number
-            }
+                  "likes": like_number,
+                  "comments": comment_number
+                }
         }
-      if len(post_photos) >0:
-        data["entities"] = {
-            "images": [{"image_url": post_photos[0] } ]
-      } 
+        if len(post_photos) >0:
+            data["entities"] = {
+                "images": [{"image_url": post_photos[0] } ]
+            } 
       sublist = list(chunks([data], 40))
-      #print(sublist)
+
       headers = {'X-Api-Key': 'MTYxODgxODcxNTk0OTUzNTY=',  'X-Secret-Key': '57e1a37b87391ffc.54ae83014fba874da0a97c8c8cccee20'}
       for i in sublist:
-          r = requests.post('https://eas.etsetra.com/service/DataInsert', headers=headers, json={"data": i})
-          # print("=======================================================================")
-          #print(i)
-          print("=======================================================================")
-          print(r.text)
-          print("=======================================================================")
+        r = requests.post('https://eas.etsetra.com/service/DataInsert', headers=headers, json={"data": i})
+        # print("=======================================================================")
+        # print(i)
+        print("=======================================================================")
+        print(r.text)
+        print("=======================================================================")
       #data.append([keyword, date_text_result, name_text, title_text, profile_photo, follower_number, post_text, post_photo, post_link])
 
-    count += 1
-      #print(keyword + ': ' + str(count))
-      #print(page)
+      count += 1
+    #print(keyword + ': ' + str(count))
+    #print(page)
     page += 1
     
 
     #print(data)
-
 wd.close()
