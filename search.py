@@ -21,7 +21,7 @@ wd.find_element_by_id("session_key").send_keys(username)
 wd.find_element_by_id("session_password").send_keys(password)
 wd.find_element_by_class_name("sign-in-form__submit-button").click()
 
-keywords = {'ekonomi'}
+keywords = {'çankaya'}
 #milletvekili, belediye, mansur yavaş, ankara büyükşehir belediyesi, ekrem imamoğlu, istanbul büyükşehir belediyesi, tokat valiliği, çankaya belediyesi, emniyet genel müdürlüğü, mehmet aktaş, afyon valiliği, urfa büyükşehir belediyesi, ozan balcı, alper taşdelen, gökmen çiçek, zeynel abidin beyazgül'}
 SCROLL_PAUSE_TIME = 3
 
@@ -93,7 +93,8 @@ for keyword in keywords:
     #soup = BeautifulSoup(wd.page_source, 'html.parser')
     #print(soup)
 
-    posts = soup.findAll("li", {"class": "reusable-search__result-container artdeco-card search-results__hide-divider mb3"})
+    posts = soup.findAll("li", {"class": "reusable-search__result-container"})
+    #print(posts)
     for i in posts:
 
       links = i.find_all("a", {"class": "app-aware-link"})
