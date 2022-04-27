@@ -1,8 +1,7 @@
 from selenium import webdriver
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
-import pandas as pd
-import requests, json, time, sys
+import requests, time, sys
 from webdriver_manager.chrome import ChromeDriverManager
 import hashlib
 sys.path.insert(0,'/usr/lib/chromium-browser/chromedriver')
@@ -13,21 +12,18 @@ chrome_options.add_argument('--no-sandbox')
 chrome_options.add_argument('--disable-dev-shm-usage')
 wd = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
 
-username = 'yozg66@yandex.com'
+username = 'denem.06@yandex.com'
 password = '159263'
 
-wd.get("https://www.linkedin.com/")
-wd.find_element_by_id("session_key").send_keys(username)
-wd.find_element_by_id("session_password").send_keys(password)
-wd.find_element_by_class_name("sign-in-form__submit-button").click()
+wd.get("https://www.linkedin.com/login/tr")
+wd.find_element_by_id("username").send_keys(username)
+wd.find_element_by_id("password").send_keys(password)
+wd.find_element_by_class_name("from__button--floating").click()
 
-keywords = {'çankaya'}
-#milletvekili, belediye, mansur yavaş, ankara büyükşehir belediyesi, ekrem imamoğlu, istanbul büyükşehir belediyesi, tokat valiliği, çankaya belediyesi, emniyet genel müdürlüğü, mehmet aktaş, afyon valiliği, urfa büyükşehir belediyesi, ozan balcı, alper taşdelen, gökmen çiçek, zeynel abidin beyazgül'}
+keywords = {'vali', 'kaymakam', 'milletvekili'}
+#milletvekili, belediye, başkan, ankara, istanbul, izmir, mansur yavaş, büyükşehir, ekrem imamoğlu, vali, alper taşdelen, gökmen çiçek, zeynel abidin beyazgül'}
 SCROLL_PAUSE_TIME = 3
-
 data = {}
-page = 1
-total_page = 0
 
 def chunks(lst, n):
     for i in range(0, len(lst), n):
@@ -36,231 +32,159 @@ def chunks(lst, n):
 def date_find(timetype, dif):
   today = datetime.now()
   difr = 0
-  if(timetype == ' dakika'):
+  if(timetype == ' dakika '):
     difr = timedelta(minutes = dif)
-  elif(timetype == ' saat'):
+  elif(timetype == ' saat '):
     difr = timedelta(hours = dif)
-  elif(timetype == ' gün'):
+  elif(timetype == ' gün '):
     difr = timedelta(days = dif)
-  elif(timetype == ' hafta'):
+  elif(timetype == ' hafta '):
     difr = timedelta(weeks = dif)
-  elif(timetype == ' ay'):
+  elif(timetype == ' ay '):
     dif = 4*dif
     difr = timedelta(weeks = dif)
   else:
     dif = 53*dif
     difr = timedelta(weeks = dif )
   return today - difr
-
+  
 for keyword in keywords:
-  count = 0
-  wd.get("https://www.linkedin.com/search/results/content/?keywords=" + keyword + "&origin=FACETED_SEARCH&page=" + str(page) + "&sortBy=\"date_posted\"")
+  wd.get("https://www.linkedin.com/search/results/content/?keywords=" + keyword + "&origin=FACETED_SEARCH&sid=abc&sortBy=\"date_posted\"")
   time.sleep(SCROLL_PAUSE_TIME)
   last_height = wd.execute_script("return document.body.scrollHeight")
-      
+    
   while True:
     wd.execute_script("window.scrollTo(0, document.body.scrollHeight);")
     time.sleep(SCROLL_PAUSE_TIME)
     new_height = wd.execute_script("return document.body.scrollHeight")
+
     if new_height == last_height:
       soup = BeautifulSoup(wd.page_source, 'html.parser')
       break
     last_height = new_height
+
   soup = BeautifulSoup(wd.page_source, 'html.parser')
-  # result = soup.find("div",{"class":"ph0 pv0 search-results__no-cluster-container mb2"})
-  # result = BeautifulSoup(str(result).replace('<br/>', '').replace(',', ' ').replace('\n', ''), 'html.parser').text
-  # result = result.split(" ")[0]
-  
-  # if(int(result)%10 == 0):
-  #   total_page = int(result)/10
-  # else:
-  #   total_page = (int(result)/10) +1
-  # total_page = int(total_page)
+  posts = soup.findAll("div", {"class": "feed-shared-update-v2"})
+ 
+  for i in posts:
+    links = i.findAll("a", {"class": "app-aware-link"})
+    href= []
+    for a in links:
+      if(len(href)<1):
+        href.append(a["href"])
+    href = href[0]
 
-  while(page <= 50):
-    wd.get("https://www.linkedin.com/search/results/content/?keywords=" + keyword + "&origin=FACETED_SEARCH&page=" + str(page) + "&sortBy=\"date_posted\"")
-    time.sleep(SCROLL_PAUSE_TIME)
-    last_height = wd.execute_script("return document.body.scrollHeight")
-      
-    while True:
-      wd.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-      time.sleep(SCROLL_PAUSE_TIME)
-      new_height = wd.execute_script("return document.body.scrollHeight")
-      if new_height == last_height:
-        soup = BeautifulSoup(wd.page_source, 'html.parser')
-        break
-      last_height = new_height
-    #soup = BeautifulSoup(wd.page_source, 'html.parser')
-    #print(soup)
-
-    posts = soup.findAll("li", {"class": "reusable-search__result-container"})
-    #print(posts)
-    for i in posts:
-
-      links = i.find_all("a", {"class": "app-aware-link"})
-      href= []
-      post_link= []
-      for a in links:
-        if(len(href)<1):
-          href.append(a["href"])
-      href = href[0]
-    
-      # for a in href: 
-      #   if (a.find('feed') != -1):
-      #     if(len(post_link)<1):
-      #       post_link.append(a)
-      #       post_link = post_link[0]
-      #       print(post_link)
-      #result = i.find("div",{"class":"feed-shared-update-v2 feed-shared-update-v2--minimal-padding full-height relative feed-shared-update-v2--e2e artdeco-card ember-view"})
-      #data_urn = result['data-urn']
-      #print(result)
-      #data_urn=i.find("div",attrs={'data-urn' : True})
-      
-
-      text = i.find("p", {"class": "entity-result__summary"})
+    if(i.find("div", {"class": "feed-shared-text"})!=None):
+      text = i.find("div", {"class": "feed-shared-text"}).find("span", {"dir": "ltr"})
       post1_text = BeautifulSoup(str(text).replace('\xa0', ' ').replace('…daha fazla gör', '').replace('None', '').replace('\n', ''),'html.parser').text
       post1_text = post1_text.rstrip()
 
-      text2 = i.find("p", {"class": "entity-result__content-summary"})
-      post2_text = BeautifulSoup(str(text2).replace('\xa0', ' ').replace('…daha fazla gör', '').replace('None', '').replace('\n', ''),'html.parser').text
-      post2_text = post2_text.rstrip()
+    h2 = i.find("h2", {"class": "feed-shared-article__title"})
+    h2_text = BeautifulSoup(str(h2).replace('\xa0', ' ').replace('None', '').replace('\n', ''),'html.parser').text
+
+    h3 = i.find("h3", {"class": "feed-shared-article__subtitle"})
+    h3_text = BeautifulSoup(str(h3).replace('\xa0', ' ').replace('…daha fazla gör', '').replace('None', '').replace('\n', ''),'html.parser').text
+    h3_text = h3_text.split("•")[0]
+
+    name = i.find("span", {"class": "feed-shared-actor__name"})
+    name_text = BeautifulSoup(str(name).replace('\n', '').replace('None', ''), 'html.parser').text
+
+    title = i.find("span", {"class": "feed-shared-actor__description"})
+    title_text = BeautifulSoup(str(title).replace('\n', '').replace('None', ''), 'html.parser').text
+
+    if(title_text.find('takipçi') != -1):
+      follower_number = title_text.split(" takipçi")[0].replace('.','')
+      title_text = ""
+    else:
+      follower_number= ""
+      title_text = title_text.strip()
     
-      h2 = i.find("h2", {"class": "entity-result__embedded-object-title t-14 mv1"})
-      h2_text = BeautifulSoup(str(h2).replace('\xa0', ' ').replace('None', '').replace('\n', ''),'html.parser').text
+    like_number = ""
+    like_number = i.find("span", {"class": "social-details-social-counts__reactions-count"})
+    like_number = BeautifulSoup(str(like_number).replace('\n', '').replace('.','').replace('None', ''), 'html.parser').text
+    
+    comment_number = ""
+    comment_number = i.find("span", {"class": "social-details-social-counts__item-text--with-social-proof"})
+    comment_number = BeautifulSoup(str(comment_number).replace('\n', '').replace('.','').replace('None', ''), 'html.parser').text
+    comment_number = comment_number.split(" yorum")[0].strip()
 
-      h3 = i.find("h3", {"class": "entity-result__embedded-object-sub-title t-12 t-black--light mv1"})
-      h3_text = BeautifulSoup(str(h3).replace('\xa0', ' ').replace('…daha fazla gör', '').replace('None', '').replace('\n', ''),'html.parser').text
-      h3_text = h3_text.split("•")[0]
+    date = i.find("span", {"class": "feed-shared-actor__sub-description"})
+    date_text = BeautifulSoup(str(date).replace('\n', '').replace(' önce', ''), 'html.parser').text
+    date_text = date_text.split("•")[0]
+    print(date_text+"zaman")
 
-      name = i.find("span", {"class": "entity-result__title-text t-16"})
-      name_text = BeautifulSoup(str(name).replace('\n', '').replace('None', ''), 'html.parser').text
-      name_text = name_text.split(" adlı")[0]
-      length = len(name_text)%2
-      if (length == 0):
-        l = int(len(name_text)/2)
-        name_text = name_text[l:]
+    if(date_text== 'şimdi '):
+      date_text = "1 dakika "
+      
+    if(date_text[1].isdigit()):
+      date_text_result = date_find(date_text[2:], int(date_text[:2]))
+      date_text_result = date_text_result.strftime('%Y-%m-%d %H:%M:%S')
+    else:
+      date_text_result = date_find(date_text[1:], int(date_text[:1]))
+      date_text_result = date_text_result.strftime('%Y-%m-%d %H:%M:%S')
+    
+    src = []
+    imgs = i.find_all("img", {"class": "ivm-view-attr__img--centered"})
+    
+    for j in imgs:
+      src.append(j["src"])
+    
+    profile_photos = []
+    post_photos = []
+    profile_photo = ''
 
-      title = i.find("div", {"class": "entity-result__primary-subtitle t-14 t-black"})
-      title_text = BeautifulSoup(str(title).replace('\n', '').replace('None', ''), 'html.parser').text
-      if(title_text.find('takipçi') != -1):
-        follower_number = title_text.split(" takipçi")[0].replace(',','')
-        if(follower_number.find('B') != -1 and follower_number.find('.') != -1 ):
-          follower_number = BeautifulSoup(str(follower_number).replace('B', '00').replace('.', ''), 'html.parser').text
+    if(len(src)>0):
+      for j in src:
+        if (j.find('profile') != -1) or (j.find('company') != -1):
+          if(len(profile_photos)<1):
+            profile_photos.append(j)
+            profile_photo = profile_photos[0]
+
+        elif (j.find('sync') != -1) or (j.find('feedshare') != -1):
+          post_photos.append(j)
         else:
-          follower_number = BeautifulSoup(str(follower_number).replace('B', '000'), 'html.parser').text
-          #follower_number = int(follower_number)
-        title_text =  ""
-      else:
-        follower_number= ""
-      
-      like_number = i.find("div", {"class": "entity-result__insights t-12"}).find("span", {"aria-hidden": "true"})
-      like_number = BeautifulSoup(str(like_number).replace('\n', '').replace('.','').replace('None', ''), 'html.parser').text
-      like_number = like_number.split(" Reaksiyon")[0]
-      #print(like_number)  
-
-      comment_number = i.find("div", {"class": "entity-result__insights t-12"}).find("span", {"class": "v-align-middle"})
-      comment_number = BeautifulSoup(str(comment_number).replace('\n', '').replace('.','').replace('None', ''), 'html.parser').text
-      comment_number = comment_number.split(" Yorum")[0]
-      #print(comment_number)
-
-      date = i.find("div", {"class": "entity-result__content-actor pt0 t-12 t-black--light"}).find("p",{"class":"t-black--light t-12"}).text
-      date_text = BeautifulSoup(str(date).replace('\n', ''), 'html.parser').text
-      date_text_result = ''
-      print(date)
-      
-
-      if(date_text.count('•') > 1):
-        date_text = date_text.split("•")[1]
-        date_text = date_text.strip()
-        #if(date_text.find('ay') > 1):
-      
-      else:
-        date_text = date_text.split("•")[0]
-        date_text = date_text.rstrip()
-      
-      if(date_text== 'şimdi'):
-          date_text = "1 dakika"
-        
-      if(date_text[1].isdigit()):
-        date_text_result = date_find(date_text[2:], int(date_text[:2]))
-        date_text_result = date_text_result.strftime('%Y-%m-%d %H:%M:%S')
-      else:
-        date_text_result = date_find(date_text[1:], int(date_text[:1]))
-        date_text_result = date_text_result.strftime('%Y-%m-%d %H:%M:%S')
-     
-      src = []
-      
-      imgs = i.find_all("img", {"class": "ivm-view-attr__img--centered"})
-     
-      for j in imgs:
-        src.append(j["src"])
-      
-      profile_photos = []
-      post_photos = []
+              if(len(profile_photo)<1):
+                  profile_photo = ''
+              elif(len(post_photos)<1):
+                  post_photos = []
+    else:
       profile_photo = ''
+      post_photos = []
 
-
-      if(len(src)>0):
-        for j in src:
-          if (j.find('profile') != -1) or (j.find('company') != -1):
-            if(len(profile_photos)<1):
-              profile_photos.append(j)
-              profile_photo = profile_photos[0]
-
-          elif (j.find('sync') != -1) or (j.find('feedshare') != -1):
-            post_photos.append(j)
-          else:
-                if(len(profile_photo)<1):
-                    profile_photo = ''
-
-                elif(len(post_photos)<1):
-                    post_photos = []
+    if(post1_text != None):
+      if(post1_text == h2_text):
+        post_text = post1_text + " " + h3_text
       else:
-        profile_photo = ''
-        post_photos = []
-
-      if(len(post1_text)>0):
-        if(post1_text == h2_text):
-          post_text = post1_text + " " + h3_text
-
-        else:
-          post_text = post1_text + " " + h2_text + " " + h3_text
-
-      else:
-        if(len(post2_text)>0):
-          post_text = post2_text
-
-        else:
-          post_text = h2_text + " " + h3_text
-
+        post_text = post1_text + " " + h2_text + " " + h3_text
       post_text = post_text.strip()
-      id = hashlib.md5((href+date_text_result).encode('utf-8')).hexdigest()
-      print(id)
-      if(date_text.find(' ay') < 1) and (date_text.find(' yıl') < 1) and (date_text.find(' hafta') < 1):
-        data={
-                "id": id,
-                "link": href,
-                "type": "post",
-                "created_at": date_text_result,
-                "text": post_text,
+      
+    id = hashlib.md5((href+date_text_result).encode('utf-8')).hexdigest()
 
-                "user":{
-                  "title": name_text,
-                  "description": title_text,
-                  "image_url": profile_photo,
-                  "counts": {
-                    "followers": follower_number,
-                  }
-                },
-                "counts": {
-                  "likes": like_number,
-                  "comments": comment_number
-                }
-        }
-        if len(post_photos) >0:
-            data["entities"] = {
-                "images": [{"image_url": post_photos[0] } ]
-            } 
+    if((date_text.find('dakika') != -1) or (date_text.find('saat') != -1) or (date_text.find('gün') != -1) == True):
+      data={
+            "id": id,
+            "link": href,
+            "type": "post",
+            "created_at": date_text_result,
+            "text": post_text,
+
+            "user":{
+              "title": name_text,
+              "description": title_text,
+              "image_url": profile_photo,
+              "counts": {
+              "followers": follower_number,
+              }
+            },
+            "counts": {
+              "likes": like_number,
+              "comments": comment_number
+            }
+      }
+      if len(post_photos) >0:
+        data["entities"] = {
+            "images": [{"image_url": post_photos[0] } ]
+        } 
       sublist = list(chunks([data], 40))
 
       headers = {'X-Api-Key': 'MTYxODgxODcxNTk0OTUzNTY=',  'X-Secret-Key': '57e1a37b87391ffc.54ae83014fba874da0a97c8c8cccee20'}
@@ -271,13 +195,5 @@ for keyword in keywords:
         print("=======================================================================")
         print(r.text)
         print("=======================================================================")
-      #data.append([keyword, date_text_result, name_text, title_text, profile_photo, follower_number, post_text, post_photo, post_link])
-
-      count += 1
-    #print(keyword + ': ' + str(count))
-    #print(page)
-    page += 1
-    
-
     #print(data)
 wd.close()
