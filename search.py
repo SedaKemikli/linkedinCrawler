@@ -21,7 +21,6 @@ wd.find_element_by_id("password").send_keys(password)
 wd.find_element_by_class_name("from__button--floating").click()
 
 keywords = {'ankara', 'istanbul', 'izmir'}
-#milletvekili, belediye, başkan, ankara, istanbul, izmir, mansur yavaş, büyükşehir, ekrem imamoğlu, vali, alper taşdelen, gökmen çiçek, zeynel abidin beyazgül'}
 SCROLL_PAUSE_TIME = 3
 data = {}
 
@@ -187,13 +186,10 @@ for keyword in keywords:
         } 
       sublist = list(chunks([data], 40))
 
-      headers = {'X-Api-Key': 'MTYxODgxODcxNTk0OTUzNTY=',  'X-Secret-Key': '57e1a37b87391ffc.54ae83014fba874da0a97c8c8cccee20'}
+      headers = {'X-Api-Key': 'api-key',  'X-Secret-Key': 'secret-key'}
       for i in sublist:
         r = requests.post('https://eas.etsetra.com/service/DataInsert', headers=headers, json={"data": i})
-        # print("=======================================================================")
-        # print(i)
         print("=======================================================================")
         print(r.text)
         print("=======================================================================")
-    #print(data)
 wd.close()
