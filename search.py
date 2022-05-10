@@ -12,15 +12,15 @@ chrome_options.add_argument('--no-sandbox')
 chrome_options.add_argument('--disable-dev-shm-usage')
 wd = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
 
-username = 'denem.06@yandex.com'
-password = '159263'
+username = 'example@hotmail.com'
+password = '1111'
 
 wd.get("https://www.linkedin.com/login/tr")
 wd.find_element_by_id("username").send_keys(username)
 wd.find_element_by_id("password").send_keys(password)
 wd.find_element_by_class_name("from__button--floating").click()
 
-keywords = {'vali', 'kaymakam', 'milletvekili'}
+keywords = {'ankara', 'istanbul', 'izmir'}
 #milletvekili, belediye, başkan, ankara, istanbul, izmir, mansur yavaş, büyükşehir, ekrem imamoğlu, vali, alper taşdelen, gökmen çiçek, zeynel abidin beyazgül'}
 SCROLL_PAUSE_TIME = 3
 data = {}
@@ -160,7 +160,7 @@ for keyword in keywords:
       
     id = hashlib.md5((href+date_text_result).encode('utf-8')).hexdigest()
 
-    if((date_text.find('dakika') != -1) or (date_text.find('saat') != -1) or (date_text.find('gün') != -1) == True):
+    if((date_text.find('dakika') != -1) or (date_text.find('saat') != -1)):
       data={
             "id": id,
             "link": href,
